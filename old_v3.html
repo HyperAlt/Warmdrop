@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Draggable "a"</title>
+  <style>
+    #draggable {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      cursor: move;
+      position: absolute;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="draggable">a</div>
+
+  <script>
+    const drag = document.getElementById("draggable");
+
+    drag.onmousedown = function (e) {
+      e.preventDefault();
+
+      let offsetX = e.clientX - drag.offsetLeft;
+      let offsetY = e.clientY - drag.offsetTop;
+
+      document.onmousemove = function (e) {
+        drag.style.left = (e.clientX - offsetX) + "px";
+        drag.style.top = (e.clientY - offsetY) + "px";
+      };
+
+      document.onmouseup = function () {
+        document.onmousemove = null;
+        document.onmouseup = null;
+      };
+    };
+  </script>
+</body>
+</html>
