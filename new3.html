@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JitterCode V.1.0.0-Epsilon</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    #draggable, #draggable2 {
+      position: absolute;
+      width: 100px;
+      touch-action: none;
+      user-select: none;
+      top: 150px;
+    }
+
+    #draggable {
+      left: 50px;
+    }
+
+    #draggable2 {
+      left: 180px;
+    }
+
+    #codebar {
+      position: absolute;
+      top: 300px;
+      left: 5vw;
+      width: 90vw;
+      height: 400px;
+      background-color: black;
+      color: white;
+      font-size: 20px;
+      padding: 10px;
+      border: none;
+      resize: none;
+    }
+
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    #popup input {
+      font-size: 20px;
+      width: 200px;
+    }
+
+    #popup button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>JitterCode V.1.0.0-Epsilon</h1>
+
+<img id="draggable" src="a.png" alt="a">
+<img id="draggable2" src="repeat.png" alt="repeat">
+
+<textarea id="codebar" placeholder="Drop letters or code here..."></textarea>
+
+<div id="popup">
+  <label>Change text: </label>
+  <input id="newLetter">
+  <button onclick="closePopup()">OK</button>
+</div>
+
+<script>
+  const draggable = document.getElementById('draggable');
+  const draggable2 = document.getElementById('draggable2');
+  const codebar = document.getElementById('codebar');
+  const popup = document.getElementById('popup');
+  const newLetterInput = document.getElementById('newLetter');
+
+  let customLetter = 'a';
+  let customLetter2 = 'repeat';
+
+  const initialX1 = 50, initialY1 = 150;
+  const initialX2 = 180, initialY2 = 150;
+  draggable.style.left = initialX1 + 'px';
+  draggable.style.top = initialY1 + 'px';
+  draggable2.style.left = initialX2 + 'px';
+  draggable2.style.top = initialY2 + 'px';
+
+  // Popup handlers
+  draggable.addEventListener('click', function () {
+    popup.style.display = 'block';
+    newLetterInput.value = customLetter;
+    newLetterInput.setAttribute('data-sprite', '1');
+    newLetterInput.focus();
+  });
+
+  draggable2.addEventListener('click', function () {
+    popup.style.display = 'block';
+    newLetterInput.value = customLetter2;
+    newLetterInput.setAttribute('data-sprite', '2');
+    newLetterInput.focus();
+  });
+
+  function closePopup() {
+    const val = newLetterInput.value.trim();
+    const spriteId = newLetterInput.getAttribute('data-sprite');
+    if (val.length > 0) {
+      if (spriteId === '1') customLetter = val;
+      else if (spriteId === '2') customLetter2 = val;
+    }
+    popup.style.display = 'none';
+  }
+
+  // Drag for a.png
+  let offsetX1 = 0, offsetY1 = 0;
+  draggable.addEventListener('touchstart', e => {
+    const touch = e.touches[0];
+    offsetX1 = touch.clientX - draggable.offsetLeft;
+    offsetY1 = touch.clientY - draggable.offsetTop;
+  });
+
+  draggable.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    draggable.style.left = (touch.clientX - offsetX1) + 'px';
+    draggable.style.top = (touch.clientY - offsetY1) + 'px';
+  });
+
+  draggable.addEventListener('touchend', () => {
+    const rect = draggable.getBoundingClientRect();
+    const codeRect = codebar.getBoundingClientRect();
+    const overlap = !(rect.right < codeRect.left || rect.left > codeRect.right || rect.bottom < codeRect.top || rect.top > codeRect.bottom);
+    if (overlap) codebar.value += customLetter;
+    draggable.style.left = initialX1 + 'px';
+    draggable.style.top = initialY1 + 'px';
+  });
+
+  // Drag for repeat.png
+  let offsetX2 = 0, offsetY2 = 0;
+  draggable2.addEventListener('touchstart', e => {
+    const touch = e.touches[0];
+    offsetX2 = touch.clientX - draggable2.offsetLeft;
+    offsetY2 = touch.clientY - draggable2.offsetTop;
+  });
+
+  draggable2.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    draggable2.style.left = (touch.clientX - offsetX2) + 'px';
+    draggable2.style.top = (touch.clientY - offsetY2) + 'px';
+  });
+
+  draggable2.addEventListener('touchend', () => {
+    const rect = draggable2.getBoundingClientRect();
+    const codeRect = codebar.getBoundingClientRect();
+    const overlap = !(rect.right < codeRect.left || rect.left > codeRect.right || rect.bottom < codeRect.top || rect.top > codeRect.bottom);
+    if (overlap) codebar.value += customLetter2;
+    draggable2.style.left = initialX2 + 'px';
+    draggable2.style.top = initialY2 + 'px';
+  });
+</script>
+
+</body>
+</html>
