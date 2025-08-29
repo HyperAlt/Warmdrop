@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JitterCode v1.13.1 – UI Patch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.4em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    #menuBtn {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      width: 32px;
+      height: 24px;
+      background: #111;
+      color: white;
+      border-radius: 4px;
+      text-align: center;
+      line-height: 24px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    #menuPopup {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border: 1px solid black;
+      padding: 20px;
+      font-size: 22px;
+      text-align: center;
+      display: none;
+      z-index: 1000;
+    }
+
+    #codebar {
+      background: #111;
+      color: white;
+      width: 100%;
+      height: 150px;
+      border-radius: 18px;
+      padding: 12px;
+      font-size: 16px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      position: relative;
+      margin-top: 12px;
+      margin-bottom: 20px;
+    }
+
+    #codebar.empty::before {
+      content: "Drag a switch...";
+      color: rgba(255, 255, 255, 0.3);
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .controls button {
+      font-size: 18px;
+      padding: 10px 16px;
+      border: 2px solid #000;
+      background: white;
+      cursor: pointer;
+    }
+
+    .sprites {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .sprite-box {
+      background: white;
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      text-align: center;
+      width: 96px;
+    }
+
+    .sprite {
+      width: 76px;
+      height: 76px;
+      border-radius: 10px;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .sprite-label {
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .drag-ghost {
+      position: absolute;
+      width: 76px;
+      height: 76px;
+      pointer-events: none;
+      opacity: 0.8;
+      z-index: 999;
+    }
+
+    .bounce {
+      transform: scale(1.05);
+      transition: transform 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>JitterCode</h1>
+  <div id="menuBtn">☰</div>
+  <div id="menuPopup">
+    <div>Code</div>
+    <div>Info</div>
+    <div>Settings</div>
+    <div>Chatbot</div>
+  </div>
+
+  <div id="codebar" class="empty"></div>
+
+  <div class="controls">
+    <strong>Switches</strong>
+    <button onclick="copyCode()">Copy</button>
+    <button onclick="exportJSON()">JSON</button>
+  </div>
+
+  <div class="sprites">
+    <div class="sprite-box">
+      <img src="repeat.png" class="sprite" id="repeat" data-type="repeat" data-mode="VERTICAL">
+      <div class="sprite-label">Repeat</div>
+    </div>
+    <div class="sprite-box">
+      <img src="a.png" class="sprite" id="a" data-type="text" data-value="a">
+      <div class="sprite-label">Text</div>
+    </div>
+  </div>
+
+  <script>
+    const codebar = document.getElementById("codebar");
+
+    function addText(t) {
+      codebar.textContent += t;
+      codebar.classList.remove("empty");
+      codebar.scrollTop = codebar.scrollHeight;
+      codebar.classList.add("bounce");
+      setTimeout(() => codebar.classList.remove("bounce"), 200);
+    }
+
+    let currentDrag = null;
+    let ghost = null;
+    let startX = 0, startY = 0, wasDragged = false;
+
+    document.querySelectorAll(".sprite").forEach(sprite => {
+      sprite.addEventListener("touchstart", (e) => {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        wasDragged = false;
+
+        ghost = sprite.cloneNode(true);
+        ghost.classList.add("drag-ghost");
+        ghost.style.left = `${startX - 38}px`;
+        ghost.style.top = `${startY - 38}px`;
+        document.body.appendChild(ghost);
+
+        currentDrag = sprite;
+      });
+
+      sprite.addEventListener("touchmove", (e) => {
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.clientX - startX);
+        const dy = Math.abs(touch.clientY - startY);
+        if (dx > 10 || dy > 10) wasDragged = true;
+
+        if (ghost) {
+          ghost.style.left = `${touch.clientX - 38}px`;
+          ghost.style.top = `${touch.clientY - 38}px`;
+        }
+      });
+
+      sprite.addEventListener("touchend", (e) => {
+        const touch = e.changedTouches[0];
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        if (!wasDragged) {
+          if (sprite.dataset.type === "text") {
+            const input = prompt("Enter custom code:", sprite.dataset.value || sprite.id);
+            if (input) sprite.dataset.value = input.trim();
+          } else if (sprite.dataset.type === "repeat") {
+            const dir = prompt("Choose repeat direction:\nVERTICAL or HORIZONTAL", sprite.dataset.mode || "VERTICAL");
+            if (dir && (dir.toUpperCase() === "VERTICAL" || dir.toUpperCase() === "HORIZONTAL")) {
+              sprite.dataset.mode = dir.toUpperCase();
+            }
+          }
+        } else if (dropTarget && dropTarget.classList.contains("sprite")) {
+          const from = currentDrag;
+          const to = dropTarget;
+          if (from.dataset.type === "repeat" && to.dataset.type === "text") {
+            const count = prompt("Repeat this text how many times?");
+            const val = to.dataset.value || to.id;
+            const mode = from.dataset.mode || "VERTICAL";
+            let result = "";
+            for (let i = 0; i < parseInt(count || 0); i++) {
+              result += (mode === "VERTICAL") ? val + "\n" : val;
+            }
+            addText(result);
+          }
+        } else if (dropTarget === codebar || codebar.contains(dropTarget)) {
+          if (currentDrag.dataset.type === "text") {
+            addText(currentDrag.dataset.value || currentDrag.id);
+          }
+        }
+
+        if (ghost) ghost.remove();
+        ghost = null;
+        currentDrag = null;
+      });
+    });
+
+    function copyCode() {
+      navigator.clipboard.writeText(codebar.textContent.trim());
+      alert("Code copied!");
+    }
+
+    function exportJSON() {
+      const json = { code: codebar.textContent.trim() };
+      alert(JSON.stringify(json, null, 2));
+    }
+
+    document.getElementById("menuBtn").addEventListener("click", () => {
+      const menu = document.getElementById("menuPopup");
+      menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    });
+  </script>
+</body>
+</html>
